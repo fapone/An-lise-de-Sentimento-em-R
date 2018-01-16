@@ -1,0 +1,92 @@
+---
+title: "Projeto 01 - Análise de Sentimento"
+author: "Rodrigo Gomes Moraes"
+date: "16 de janeiro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Análise de Sentimento dos presidenciáveis no Brasil
+
+Este projeto tem como objetivo coletar dados do Twitter e fazer a análise de sentimento quanto aos presidenciáveis no Brasil.
+
+Utilizando as seguintes bibliotecas:
+
+
+
+### Utilizando as bibliotecas necessárias 
+library("twitteR")
+
+library("plyr")
+
+library("stringr")
+
+library("tm")
+
+library("readr")
+
+library("dplyr")
+
+library("Rstem")
+
+library("ggplot2")
+
+
+### Passo 1 - Obter conexão com twitter
+Utilizamos a função de "setup_twitter_oauth" autenticação de usuários na conta do twitter
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+### Passo 2 - Coletar dados para análise através do Twitter
+listtwr <-  searchTwitter(presidente, n=500)  
+
+### Passo 3 - Fazer a limpeza dos dados coletados
+listtwr = sapply(listtwr, function(x) x$getText())
+
+listtwr <- iconv(listtwr, to = "utf-8", sub="")
+  
+auxCorpus = Corpus(VectorSource(listtwr))
+
+auxCorpus <- tm_map(auxCorpus, removePunctuation)
+
+auxCorpus <- tm_map(auxCorpus, function(x)removeWords(x, stopwords()))
+
+auxCorpus <- tm_map(auxCorpus, content_transformer(function(x) iconv(x, to='UTF-8', sub='byte')))
+
+auxCorpus <- tm_map(auxCorpus, content_transformer(tolower))
+ 
+### Passo 4 - Fazer a analise de sentimentos dos candidados a presidencia
+Para atender esta necessidade que é o principal objetivo do projeto, foi necessário criar uma função que calcule o Score do candidato
+
+### Antes de chamar a função de calculo do score, é foi necessário ler os arquivos de palavras positivas e negativas
+wpositiva = readLines("palavras_positivas.txt")
+
+wnegativa = readLines("palavras_negativas.txt")
+
+### Chama funcao que traz o score da analise de sentimento
+pesqp1 = "Bolsonaro"
+
+pesqp2 = "Lula"
+
+twtext1 <- gettext(presidenciavel(pesqp1))
+
+twtext2 <- gettext(presidenciavel(pesqp2))
+
+presidente1 = sentiments(twtext1, wpositiva, wnegativa)
+
+presidente2 = sentiments(twtext2, wpositiva, wnegativa)
+
+### Passo 5 - Plotar no grafico o Score de cada candidato
+Após fazer a analise de sentimento do candidato e colocar as informações no Dataframe, cnoseguiremos plotar através do gráfico de barras
+a Análise de Sentimento dos presidenciáveis do Brasil.
+
+ggplot(dfpresidente) + 
+
+  geom_col(aes(y = Score, x = Candidato, fill = Score)) +
+
+  theme_bw()
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
